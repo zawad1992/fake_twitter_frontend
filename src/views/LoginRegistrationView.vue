@@ -2,12 +2,8 @@
     <div class="row justify-content-center mt-5">
       <div class="col-md-4">
         <ul class="nav nav-tabs">
-            <li class="nav-item">
-            <a class="nav-link" :class="{ active: currentTab === 'login' }" @click="currentTab = 'login'">Login</a>
-            </li>
-            <li class="nav-item">
-            <a class="nav-link" :class="{ active: currentTab === 'register' }" @click="currentTab = 'register'">Register</a>
-            </li>
+            <li class="nav-item"> <a class="nav-link" :class="{ active: currentTab === 'login' }" @click="currentTab = 'login'">Login</a> </li>
+            <li class="nav-item"> <a class="nav-link" :class="{ active: currentTab === 'register' }" @click="currentTab = 'register'">Register</a> </li>
         </ul>
         <div class="tab-content" id="myTabContent">
           <div v-if="currentTab === 'login'" class="tab-pane active show">
