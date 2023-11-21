@@ -13,14 +13,14 @@
                   <h2 class="text-center mb-4">Login to Twitter</h2>
                   <div class="card">
                     <div class="card-body">
-                      <form>
+                      <form @submit.prevent="submitForm">
                         <div class="mb-3">
-                          <label for="username" class="form-label">Phone, email, or username</label>
-                          <input type="text" class="form-control" id="username">
+                          <label for="email" class="form-label">Email</label>
+                          <input type="text" class="form-control" v-model="email" id="email">
                         </div>
                         <div class="mb-3">
                           <label for="password" class="form-label">Password</label>
-                          <input type="password" class="form-control" id="password">
+                          <input type="password" class="form-control" v-model="password" id="password">
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Login</button>
                       </form>
@@ -65,11 +65,35 @@
     </div>
 </template>
 <script>
+import axios from 'axios';
+
 export default {
-  data() {
-    return {
-      currentTab: 'login'
+    data() {
+        return {
+          currentTab: 'login',
+          email: 'zawad1992@gmail.com ',
+          password: '123456'
+        }
+    },
+    methods: {
+        async submitForm() {
+            try {
+               
+                const response = await axios.post('http://127.0.0.1:8888/LARAVEL/fake_twitter_backend/api/login', {
+                    email: this.email,
+                    password: this.password
+                });
+                this.saveToSessionStorage(response.data);
+                this.$router.push('/');
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        saveToSessionStorage(data) {
+          console.log(data);
+            sessionStorage.setItem('user', JSON.stringify(data.user));
+            sessionStorage.setItem('authorisation', JSON.stringify(data.authorisation));
+        }
     }
-  }
 }
 </script>
