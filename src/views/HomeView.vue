@@ -1,9 +1,5 @@
 <template>
   <div class="col-md-12">
-    <ul class="nav nav-tabs mx-auto">
-      <li class="nav-item"> <a class="nav-link" :class="{ active: currentTab === 'foryou' }" @click="currentTab = 'foryou'">For You</a> </li>
-      <li class="nav-item"> <a class="nav-link" :class="{ active: currentTab === 'following' }" @click="currentTab = 'following'">Following</a> </li>
-    </ul>
     <div class="card">
       <div class="card-body">
         <h5 class="card-title">Share your thought</h5>
@@ -17,15 +13,14 @@
         </p>
       </div>
     </div>
+    <ul class="nav nav-tabs mx-auto mt-2">
+      <li class="nav-item"> <a class="nav-link" :class="{ active: currentTab === 'foryou' }" @click="currentTab = 'foryou'">For You</a> </li>
+      <li class="nav-item"> <a class="nav-link" :class="{ active: currentTab === 'following' }" @click="currentTab = 'following'">Following</a> </li>
+    </ul>
+  
     <div class="tab-content mt-2" id="myTabContent">
       <div v-if="currentTab === 'foryou'" class="tab-pane active show">
         <!-- Content for "For You" -->
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">For You</h5>
-            <p class="card-text">Content for "For You" goes here.</p>
-          </div>
-        </div>
         <div class="card" v-for="tweet in mytweets" :key="tweet._id">
           <div class="card-body">
             <h5 class="card-title">{{ tweet.user ? tweet.user.name : 'Unknown User' }}</h5>
@@ -41,11 +36,9 @@
                 <span aria-hidden="true">Previous</span>
               </a>
             </li>
-
             <li class="page-item" v-for="page in pageNumbers(mytweetsPagination.totalPages)" :key="page" :class="{ active: mytweetsPagination.currentPage === page }">
               <a class="page-link" href="#" @click="goToPage('following', page)">{{ page }}</a>
             </li>
-
             <li class="page-item" :class="{ disabled: mytweetsPagination.currentPage === mytweetsPagination.totalPages }">
               <a class="page-link" href="#" @click="changePage('following', 1)" aria-label="Next">
                 <span aria-hidden="true">Next</span>
@@ -56,12 +49,6 @@
       </div>
       <div v-if="currentTab === 'following'" class="tab-pane active show">
         <!-- Content for "Following" -->
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">Following</h5>
-            <p class="card-text">Content for "Following" goes here.</p>
-          </div>
-        </div>
         <div class="card" v-for="tweet in tweets" :key="tweet._id">
           <div class="card-body">
             <h5 class="card-title">{{ tweet.user ? tweet.user.name : 'Unknown User' }}</h5>
@@ -77,11 +64,9 @@
                 <span aria-hidden="true">Previous</span>
               </a>
             </li>
-
             <li class="page-item" v-for="page in pageNumbers(tweetsPagination.totalPages)" :key="page" :class="{ active: tweetsPagination.currentPage === page }">
               <a class="page-link" href="#" @click="goToPage('forYou', page)">{{ page }}</a>
             </li>
-
             <li class="page-item" :class="{ disabled: tweetsPagination.currentPage === tweetsPagination.totalPages }">
               <a class="page-link" href="#" @click="changePage('forYou', 1)" aria-label="Next">
                 <span aria-hidden="true">Next</span>
