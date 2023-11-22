@@ -15,7 +15,7 @@
           <a class="nav-link" href="#">Notifications</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Messages</a>
+          <a class="nav-link" href="#" @click="logout">Logout</a>
         </li>
       </div>
     </div>
@@ -61,32 +61,11 @@
                 <p class="card-text">Content for "For You" goes here.</p>
               </div>
             </div>
-            <div class="card">
+            <div class="card" v-for="tweet in mytweets" :key="tweet._id">
               <div class="card-body">
-                <h5 class="card-title">Latest Tweets</h5>
-                <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor
-                  mauris
-                  vitae
-                  nunc
-                  aliquam, id lacinia nunc tincidunt. Sed auctor, nunc id aliquet tincidunt, nunc nunc
-                  tincidunt
-                  mauris,
-                  id
-                  aliquam nunc nunc id.</p>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-body">
-                <h5 class="card-title">Latest Tweets</h5>
-                <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor
-                  mauris
-                  vitae
-                  nunc
-                  aliquam, id lacinia nunc tincidunt. Sed auctor, nunc id aliquet tincidunt, nunc nunc
-                  tincidunt
-                  mauris,
-                  id
-                  aliquam nunc nunc id.</p>
+                <h5 class="card-title">{{ tweet.user ? tweet.user.name : 'Unknown User' }}</h5>
+                <p class="card-text">{{ tweet.tweet }}</p>
+                <small>Posted at: {{ tweet.created_at }}</small>
               </div>
             </div>
           </div>
@@ -98,32 +77,11 @@
                 <p class="card-text">Content for "Following" goes here.</p>
               </div>
             </div>
-            <div class="card">
+            <div class="card" v-for="tweet in tweets" :key="tweet._id">
               <div class="card-body">
-                <h5 class="card-title">Latest Tweets</h5>
-                <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor
-                  mauris
-                  vitae
-                  nunc
-                  aliquam, id lacinia nunc tincidunt. Sed auctor, nunc id aliquet tincidunt, nunc nunc
-                  tincidunt
-                  mauris,
-                  id
-                  aliquam nunc nunc id.</p>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-body">
-                <h5 class="card-title">Latest Tweets</h5>
-                <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor
-                  mauris
-                  vitae
-                  nunc
-                  aliquam, id lacinia nunc tincidunt. Sed auctor, nunc id aliquet tincidunt, nunc nunc
-                  tincidunt
-                  mauris,
-                  id
-                  aliquam nunc nunc id.</p>
+                <h5 class="card-title">{{ tweet.user ? tweet.user.name : 'Unknown User' }}</h5>
+                <p class="card-text">{{ tweet.tweet }}</p>
+                <small>Posted at: {{ tweet.created_at }}</small>
               </div>
             </div>
           </div>
@@ -154,7 +112,6 @@ export default {
   data() {
     let userData = sessionStorage.getItem('user');
     let user;
-
     if (userData !== null) {
         // Parse userData if it's not null
         try {
@@ -170,11 +127,13 @@ export default {
 
     return {
       tweets: [],
+      mytweets: [],
       newTweet: {
         user_id: user._id || '', // Set the user ID here or dynamically
         tweet: ''
       },
-      currentTab: 'foryou'
+      currentTab: 'foryou',
+      user_id: user._id || ''
     };
   },
   async created() {
@@ -191,8 +150,26 @@ export default {
             'Authorization': `Bearer ${token}`
           }
         });
+        
+        if (response.data && response.data.data) {
+          this.tweets = response.data.data;
+        } else {
+          this.tweets = [];
+        }
+        
+        const response2 = await axios.get('http://127.0.0.1:8888/LARAVEL/fake_twitter_backend/api/tweets/user/'+this.user_id, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response2.data && response2.data.data) {
+          this.mytweets = response2.data.data;
+        } else {
+          this.mytweets = [];
+        }
 
-        this.tweets = response.data;
+
       } catch (error) {
         console.error(error);
       }
@@ -207,11 +184,38 @@ export default {
             'Authorization': `Bearer ${token}`
           }
         });
-
-        this.tweets.unshift(response.data);
+       
+        if (response.data && response.data.data) {
+          this.tweets.unshift(response.data.data);
+          this.mytweets.unshift(response.data.data);
+        }
         this.newTweet = { user_id: this.newTweet.user_id, tweet: '' }; // Reset the tweet text but keep the user_id
       } catch (error) {
         console.error(error);
+      }
+    },
+    async logout() {
+      try {
+        const auth = JSON.parse(sessionStorage.getItem('authorisation'));
+        const token = auth ? auth.token : '';
+
+        // Call backend logout API
+        await axios.post('http://127.0.0.1:8888/LARAVEL/fake_twitter_backend/api/logout', {}, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        // Clear user information from sessionStorage
+        sessionStorage.removeItem('user');
+        sessionStorage.removeItem('authorisation');
+
+        // Redirect to home page or login page
+        this.$router.push('/login'); // Replace '/login' with the path you use for your login page
+
+      } catch (error) {
+        console.error("Logout failed:", error);
+        // Handle error (optional)
       }
     }
   }
