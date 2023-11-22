@@ -24,6 +24,8 @@
             <h5 class="card-title">{{ tweet.user ? tweet.user.name : 'Unknown User' }}</h5>
             <p class="card-text">{{ tweet.tweet }}</p>
             <small>Posted at: {{ formatDate(tweet.created_at) }}</small>
+            <div class="clearfix"></div>
+            <span>Total: {{ tweet.likes.length }} likes </span>
           </div>
         </div>
         <!-- Pagination for 'For You' Tab -->
@@ -52,6 +54,11 @@
             <h5 class="card-title">{{ tweet.user ? tweet.user.name +'-'+ tweet.user.email : 'Unknown User' }} <button class="btn btn-outline-danger btn-sm" @click="unfollow(tweet.user_id)">Unfollow</button></h5>
             <p class="card-text">{{ tweet.tweet }}</p>
             <small>Posted at: {{ formatDate(tweet.created_at) }}</small>
+            <div class="clearfix"></div>
+            <span>Total: {{ tweet.likes.length }} likes </span>
+            <!-- Check if the current user has liked this tweet -->
+            <button v-if="!isLikedByCurrentUser(tweet.likes)" class="btn btn-sm btn-success" @click="likeTweet(tweet._id, 1)">Like</button>
+            <button v-else class="btn btn-sm btn-danger" @click="likeTweet(tweet._id, 0)">Unlike</button>
             
           </div>
         </div>
@@ -122,6 +129,7 @@ export default {
         totalPages: 0
       },
       pageSize: 5, // This should match the backend's pagination size
+      likedTweets: [], // Store IDs of tweets the user has liked
     };
   },
   async created() {
@@ -180,6 +188,32 @@ export default {
       // Helper method to get the correct pagination object
       return this.currentTab === 'foryou' ? this.mytweetsPagination : this.tweetsPagination;
     },
+    async likeTweet(tweetId, status) {
+      try {
+        await apiPost(`/like/${tweetId}/${status}`, { user_id: this.user_id });
+
+        // Find the index of the tweet in the tweets array
+        const tweetIndex = this.tweets.findIndex(tweet => tweet._id === tweetId);
+        if (tweetIndex !== -1) {
+          // Update the likes array for the tweet
+          if (status === 1) {
+            // Add like
+            this.tweets[tweetIndex].likes.push({ user_id: this.user_id });
+          } else {
+            // Remove like
+            this.tweets[tweetIndex].likes = this.tweets[tweetIndex].likes.filter(like => like.user_id !== this.user_id);
+          }
+        }
+      } catch (error) {
+        console.error("Error updating like status:", error);
+      }
+    },
+    isLikedByCurrentUser(likesArray) {
+      console.log(likesArray);
+      // Check if the likes array contains an entry with the current user's ID
+      return likesArray.some(like => like.user_id === this.user_id);
+    },
+
     async unfollow(userId) {
       try {
         // Call API to unfollow the user
