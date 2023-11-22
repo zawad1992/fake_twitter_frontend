@@ -2,10 +2,20 @@ import axios from 'axios';
 
 axios.defaults.baseURL = 'http://127.0.0.1:8888/LARAVEL/fake_twitter_backend/api/';
 
+
 function getAuthToken() {
-  const auth = JSON.parse(sessionStorage.getItem('authorisation'));
-  return auth ? auth.token : '';
+  try {
+    const authString = sessionStorage.getItem('authorisation');
+    if (authString) {
+      const auth = JSON.parse(authString);
+      return auth.token || '';
+    }
+  } catch (error) {
+    // console.error("Error parsing authorisation from sessionStorage:", error);
+  }
+  return '';
 }
+
 
 export async function checkAuthentication() {
   try {
@@ -32,27 +42,27 @@ export function saveToSessionStorage(data) {
   sessionStorage.setItem('authorisation', JSON.stringify(data.authorisation));
 }
 
-export async function apiGet(url) {
+export async function apiGet(url, includeAuth = true) {
   try {
-    const response = await axios.get(url, {
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-    });
+    const headers = includeAuth ? { 'Authorization': `Bearer ${getAuthToken()}` } : {};
+    const response = await axios.get(url, { headers });
     return response.data;
   } catch (error) {
     handleApiError(error);
   }
 }
 
-export async function apiPost(url, data) {
+
+export async function apiPost(url, data, includeAuth = true) {
   try {
-    const response = await axios.post(url, data, {
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-    });
+    const headers = includeAuth ? { 'Authorization': `Bearer ${getAuthToken()}` } : {};
+    const response = await axios.post(url, data, { headers });
     return response.data;
   } catch (error) {
     handleApiError(error);
   }
 }
+
 
 function handleApiError(error) {
   if (error.response && error.response.status === 401) {
