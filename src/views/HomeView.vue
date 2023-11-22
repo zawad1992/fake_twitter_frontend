@@ -141,6 +141,14 @@ export default {
   async created() {
     await this.fetchTweets();
   },
+  watch: {
+    // Watcher for currentTab
+    currentTab(newTab, oldTab) {
+      if (newTab !== oldTab) {
+        this.fetchTweets();
+      }
+    }
+  },
   methods: {
     async addTweet() {
       try {
@@ -155,23 +163,36 @@ export default {
       }
     },
     async fetchTweets() {
-      try {
-        // Fetching data for 'For You' tab
-        const tweetsResponse = await apiGet(`/tweets/${this.user_id}?page=${this.tweetsPagination.currentPage}&pageSize=${this.pageSize}`);
-        if (tweetsResponse && tweetsResponse.data) {
-          this.tweets = tweetsResponse.data.data || []; // Accessing nested 'data'
-          this.tweetsPagination.totalPages = tweetsResponse.data.last_page || 0;
-        }
+      // Clear existing data before fetching new data
+      this.tweets = [];
+      this.mytweets = [];
 
-        // Fetching data for 'Following' tab
-        const myTweetsResponse = await apiGet(`/tweets/user/${this.user_id}?page=${this.mytweetsPagination.currentPage}&pageSize=${this.pageSize}`);
-        if (myTweetsResponse && myTweetsResponse.data) {
-          this.mytweets = myTweetsResponse.data.data || []; // Accessing nested 'data'
-          this.mytweetsPagination.totalPages = myTweetsResponse.data.last_page || 0;
+      // Determine which API endpoint to call based on the current tab
+      let apiEndpoint;
+      if (this.currentTab === 'foryou') {
+        apiEndpoint = `/tweets/user/${this.user_id}`;
+      } else if (this.currentTab === 'following') {
+        apiEndpoint = `/tweets/${this.user_id}`;
+      }
+
+      // Fetch data from the appropriate endpoint
+      try {
+        const response = await apiGet(`${apiEndpoint}?page=${this.getPagination().currentPage}&pageSize=${this.pageSize}`);
+        if (response && response.data) {
+          if (this.currentTab === 'foryou') {
+            this.mytweets = response.data.data || [];
+          } else if (this.currentTab === 'following') {
+            this.tweets = response.data.data || [];
+          }
+          this.getPagination().totalPages = response.data.last_page || 0;
         }
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching tweets:", error);
       }
+    },
+    getPagination() {
+      // Helper method to get the correct pagination object
+      return this.currentTab === 'foryou' ? this.mytweetsPagination : this.tweetsPagination;
     },
     formatDate(dateString) {
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
