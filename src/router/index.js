@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import MainLayout from '../layouts/MainLayout.vue';
 import HomeView from '../views/HomeView.vue'
+import AboutView from '../views/AboutView.vue'
+import ProfileView from '../views/ProfileView.vue'
 import LoginRegistrationView from '../views/LoginRegistrationView.vue'
 import { checkAuthentication } from '../api';
 
@@ -9,27 +12,15 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView
+      component: MainLayout,
+      children: [
+        { path: '', component: HomeView },
+        { path: 'profile', component: ProfileView },
+        { path: 'about', component: AboutView },
+      ]
     },
-    {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
-    },
-    {
-      path: '/login',
-      name: 'login',
-      component: LoginRegistrationView
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: LoginRegistrationView 
-    }
+    { path: '/login', name: 'login', component: LoginRegistrationView },
+    { path: '/register', name: 'register', component: LoginRegistrationView }
   ]
 })
 
