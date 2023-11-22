@@ -12,9 +12,6 @@
       </ul>
       <div class="navbar-nav ms-auto">
         <li class="nav-item">
-          <a class="nav-link" href="#">Notifications</a>
-        </li>
-        <li class="nav-item">
           <a class="nav-link" href="#" @click="logout">Logout</a>
         </li>
       </div>
@@ -65,9 +62,29 @@
               <div class="card-body">
                 <h5 class="card-title">{{ tweet.user ? tweet.user.name : 'Unknown User' }}</h5>
                 <p class="card-text">{{ tweet.tweet }}</p>
-                <small>Posted at: {{ tweet.created_at }}</small>
+                <small>Posted at: {{ formatDate(tweet.created_at) }}</small>
               </div>
             </div>
+            <!-- Pagination for 'For You' Tab -->
+            <nav aria-label="Page navigation example">
+              <ul class="pagination">
+                <li class="page-item" :class="{ disabled: mytweetsPagination.currentPage === 1 }">
+                  <a class="page-link" href="#" @click="changePage('following', -1)" aria-label="Previous">
+                    <span aria-hidden="true">Previous</span>
+                  </a>
+                </li>
+
+                <li class="page-item" v-for="page in pageNumbers(mytweetsPagination.totalPages)" :key="page" :class="{ active: mytweetsPagination.currentPage === page }">
+                  <a class="page-link" href="#" @click="goToPage('following', page)">{{ page }}</a>
+                </li>
+
+                <li class="page-item" :class="{ disabled: mytweetsPagination.currentPage === mytweetsPagination.totalPages }">
+                  <a class="page-link" href="#" @click="changePage('following', 1)" aria-label="Next">
+                    <span aria-hidden="true">Next</span>
+                  </a>
+                </li>
+              </ul>
+            </nav>
           </div>
           <div v-if="currentTab === 'following'" class="tab-pane active show">
             <!-- Content for "Following" -->
@@ -81,9 +98,30 @@
               <div class="card-body">
                 <h5 class="card-title">{{ tweet.user ? tweet.user.name : 'Unknown User' }}</h5>
                 <p class="card-text">{{ tweet.tweet }}</p>
-                <small>Posted at: {{ tweet.created_at }}</small>
+                <small>Posted at: {{ formatDate(tweet.created_at) }}</small>
               </div>
             </div>
+            <!-- Pagination for 'Following' Tab -->
+            <nav aria-label="Page navigation example">
+              <ul class="pagination">
+                <li class="page-item" :class="{ disabled: tweetsPagination.currentPage === 1 }">
+                  <a class="page-link" href="#" @click="changePage('forYou', -1)" aria-label="Previous">
+                    <span aria-hidden="true">Previous</span>
+                  </a>
+                </li>
+
+                <li class="page-item" v-for="page in pageNumbers(tweetsPagination.totalPages)" :key="page" :class="{ active: tweetsPagination.currentPage === page }">
+                  <a class="page-link" href="#" @click="goToPage('forYou', page)">{{ page }}</a>
+                </li>
+
+                <li class="page-item" :class="{ disabled: tweetsPagination.currentPage === tweetsPagination.totalPages }">
+                  <a class="page-link" href="#" @click="changePage('forYou', 1)" aria-label="Next">
+                    <span aria-hidden="true">Next</span>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+            
           </div>
         </div>
         <!-- End tab content -->
@@ -134,24 +172,22 @@ export default {
         tweet: ''
       },
       currentTab: 'foryou',
-      user_id: user._id || ''
+      user_id: user._id || '',
+      tweetsPagination: {
+        currentPage: 1,
+        totalPages: 0
+      },
+      mytweetsPagination: {
+        currentPage: 1,
+        totalPages: 0
+      },
+      pageSize: 5, // This should match the backend's pagination size
     };
   },
   async created() {
     await this.fetchTweets();
   },
   methods: {
-    async fetchTweets() {
-      try {
-        const tweetsData = await apiGet('/tweets');
-        this.tweets = tweetsData && tweetsData.data ? tweetsData.data : [];
-
-        const myTweetsData = await apiGet(`/tweets/user/${this.user_id}`);
-        this.mytweets = myTweetsData && myTweetsData.data ? myTweetsData.data : [];
-      } catch (error) {
-        console.error(error);
-      }
-    },
     async addTweet() {
       try {
         const newTweetData = await apiPost('/tweets', this.newTweet);
@@ -164,6 +200,54 @@ export default {
         console.error(error);
       }
     },
+    async fetchTweets() {
+      try {
+        // Fetching data for 'For You' tab
+        const tweetsResponse = await apiGet(`/tweets?page=${this.tweetsPagination.currentPage}&pageSize=${this.pageSize}`);
+        if (tweetsResponse && tweetsResponse.data) {
+          this.tweets = tweetsResponse.data.data || []; // Accessing nested 'data'
+          this.tweetsPagination.totalPages = tweetsResponse.data.last_page || 0;
+        }
+
+        // Fetching data for 'Following' tab
+        const myTweetsResponse = await apiGet(`/tweets/user/${this.user_id}?page=${this.mytweetsPagination.currentPage}&pageSize=${this.pageSize}`);
+        if (myTweetsResponse && myTweetsResponse.data) {
+          this.mytweets = myTweetsResponse.data.data || []; // Accessing nested 'data'
+          this.mytweetsPagination.totalPages = myTweetsResponse.data.last_page || 0;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    formatDate(dateString) {
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+      return new Date(dateString).toLocaleString('en-US', options);
+    },
+    changePage(tab, delta) {
+      if (tab === 'forYou' && this.canChangePage(this.tweetsPagination, delta)) {
+        this.tweetsPagination.currentPage += delta;
+        this.fetchTweets();
+      } else if (tab === 'following' && this.canChangePage(this.mytweetsPagination, delta)) {
+        this.mytweetsPagination.currentPage += delta;
+        this.fetchTweets();
+      }
+    },
+    canChangePage(pagination, delta) {
+      const newPage = pagination.currentPage + delta;
+      return newPage > 0 && newPage <= pagination.totalPages;
+    },
+    pageNumbers(totalPages) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    },
+    goToPage(tab, page) {
+      if (tab === 'forYou') {
+        this.tweetsPagination.currentPage = page;
+      } else if (tab === 'following') {
+        this.mytweetsPagination.currentPage = page;
+      }
+      this.fetchTweets();
+    },
+
     async logout() {
       try {
         await apiLogout();
