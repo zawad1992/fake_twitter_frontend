@@ -1,40 +1,77 @@
 import axios from 'axios';
 
-// Set the base URL for all Axios requests
 axios.defaults.baseURL = 'http://127.0.0.1:8888/LARAVEL/fake_twitter_backend/api/';
+
+function getAuthToken() {
+  const auth = JSON.parse(sessionStorage.getItem('authorisation'));
+  return auth ? auth.token : '';
+}
 
 export async function checkAuthentication() {
   try {
-    // Get the token from session storage
-    const auth = JSON.parse(sessionStorage.getItem('authorisation'));
-    const token = auth ? auth.token : '';
-
-    // Replace '/refresh' with your actual API endpoint for authentication checking
+    const token = getAuthToken();
     const response = await axios.post('/refresh', {}, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
-
-    // Update the session storage with the new token
     saveToSessionStorage(response.data);
-
-    return response.data; // Assuming the API returns some user data if authenticated
+    return response.data;
   } catch (error) {
-    // Handle different types of errors appropriately
     if (error.response && error.response.status === 401) {
-      // Throw a custom error or a flag to indicate unauthenticated error
       throw { isUnauthenticated: true, message: 'User is not authenticated' };
     } else {
-      // Throw other types of errors as they are
       throw error;
     }
   }
 }
 
-function saveToSessionStorage(data) {
-  // console.log(data);
-  // sessionStorage.setItem('user', JSON.stringify(data.user));
+export function saveToSessionStorage(data) {
+  if(data.user) {
+    sessionStorage.setItem('user', JSON.stringify(data.user));
+  }
+
   sessionStorage.setItem('authorisation', JSON.stringify(data.authorisation));
 }
 
+export async function apiGet(url) {
+  try {
+    const response = await axios.get(url, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function apiPost(url, data) {
+  try {
+    const response = await axios.post(url, data, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+function handleApiError(error) {
+  if (error.response && error.response.status === 401) {
+    throw { isUnauthenticated: true, message: 'User is not authenticated' };
+  } else {
+    throw error;
+  }
+}
+
+export async function apiLogout() {
+  try {
+    // Call backend logout API using apiPost
+    await apiPost('/logout', {});
+
+    // Clear user information from sessionStorage
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('authorisation');
+  } catch (error) {
+    console.error("Logout failed:", error);
+    throw error; // Optionally, rethrow the error to be handled by the caller
+  }
+}
