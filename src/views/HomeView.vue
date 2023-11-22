@@ -97,7 +97,6 @@
 </template>
 
 <script>
-console.log("Hello from HomeView.vue");
 // Import the API functions
 import { apiGet, apiPost, apiLogout } from '../api';
 
@@ -158,7 +157,7 @@ export default {
     async fetchTweets() {
       try {
         // Fetching data for 'For You' tab
-        const tweetsResponse = await apiGet(`/tweets?page=${this.tweetsPagination.currentPage}&pageSize=${this.pageSize}`);
+        const tweetsResponse = await apiGet(`/tweets/${this.user_id}?page=${this.tweetsPagination.currentPage}&pageSize=${this.pageSize}`);
         if (tweetsResponse && tweetsResponse.data) {
           this.tweets = tweetsResponse.data.data || []; // Accessing nested 'data'
           this.tweetsPagination.totalPages = tweetsResponse.data.last_page || 0;
