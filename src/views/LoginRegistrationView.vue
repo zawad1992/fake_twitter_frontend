@@ -17,10 +17,12 @@
                         <div class="mb-3">
                           <label for="email" class="form-label">Email</label>
                           <input type="text" class="form-control" v-model="login.email" id="login.email">
+                          <div v-if="login.errors.email" class="text-danger">{{ login.errors.email[0] }}</div>
                         </div>
                         <div class="mb-3">
                           <label for="password" class="form-label">Password</label>
                           <input type="password" class="form-control" v-model="login.password" id="login.password">
+                          <div v-if="login.errors.password" class="text-danger">{{ login.errors.password[0] }}</div>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Login</button>
                       </form>
@@ -40,14 +42,17 @@
                         <div class="mb-3">
                           <label for="name" class="form-label">Name</label>
                           <input type="text" class="form-control" v-model="registration.name" id="name">
+                          <div v-if="registration.errors.name" class="text-danger">{{ registration.errors.name[0] }}</div>
                         </div>
                         <div class="mb-3">
                           <label for="email" class="form-label">Email</label>
                           <input type="email" class="form-control" v-model="registration.email" id="email">
+                          <div v-if="registration.errors.email" class="text-danger">{{ registration.errors.email[0] }}</div>
                         </div>
                         <div class="mb-3">
                           <label for="password" class="form-label">Password</label>
                           <input type="password" class="form-control" v-model="registration.password" id="password">
+                          <div v-if="registration.errors.password" class="text-danger">{{ registration.errors.password[0] }}</div>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Sign up</button>
                       </form>
@@ -56,6 +61,7 @@
                 </div>
             </div>
           </div>
+          
         </div>
       </div>
     </div>
@@ -69,12 +75,14 @@ export default {
           currentTab: 'login',
           login: {
             email: 'zawad1992@gmail.com',
-            password: '123456'
+            password: '123456',
+            errors: {}
           },
           registration: {
             name: '',
             email: '',
-            password: '123456'
+            password: '123456',
+            errors: {}
           }
          
         }
@@ -82,20 +90,32 @@ export default {
     methods: {
       async submitForm() {
         try {
-          const loginData = await apiPost('/login', this.login);
-          saveToSessionStorage(loginData);
-          this.$router.push('/');
+          const loginData = await apiPost('/login', this.login, false);
+          if (loginData.status === 'failed' && loginData.data) {
+            this.login.errors = loginData.data;
+          } else {
+            saveToSessionStorage(loginData);
+            this.$router.push('/');
+          }
         } catch (error) {
           console.error(error);
         }
       },
       async submitRegistrationForm() {
         try {
-          const registrationData = await apiPost('/register', this.registration);
-          saveToSessionStorage(registrationData);
-          this.$router.push('/');
+          const registrationData = await apiPost('/register', this.registration, false);
+
+          // Check if the response indicates a validation failure
+          if (registrationData.status === 'failed' && registrationData.data) {
+            this.registration.errors = registrationData.data;
+          } else {
+            // Handle successful registration
+            saveToSessionStorage(registrationData);
+            this.$router.push('/');
+          }
         } catch (error) {
           console.error(error);
+          // Handle network or server errors
         }
       }
     }
