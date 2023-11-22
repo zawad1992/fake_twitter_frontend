@@ -209,7 +209,6 @@ export default {
       }
     },
     isLikedByCurrentUser(likesArray) {
-      console.log(likesArray);
       // Check if the likes array contains an entry with the current user's ID
       return likesArray.some(like => like.user_id === this.user_id);
     },
