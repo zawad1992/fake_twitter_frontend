@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-axios.defaults.baseURL = 'https://twitter.errorpoint.com/api/';
+axios.defaults.baseURL = 'https://twitter.errorpoint.com/backend/api/';
 
 
 function getAuthToken() {
