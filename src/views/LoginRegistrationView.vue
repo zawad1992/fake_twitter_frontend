@@ -61,7 +61,7 @@
     </div>
 </template>
 <script>
-import axios from 'axios';
+import { apiPost, saveToSessionStorage } from '../api';
 
 export default {
     data() {
@@ -80,28 +80,24 @@ export default {
         }
     },
     methods: {
-        async submitForm() {
-            try {
-                const response = await axios.post('http://127.0.0.1:8888/LARAVEL/fake_twitter_backend/api/login', this.login);
-                this.saveToSessionStorage(response.data);
-                this.$router.push('/');
-            } catch (error) {
-                console.error(error);
-            }
-        },
-        async submitRegistrationForm() {
-          try {
-              const response = await axios.post('http://127.0.0.1:8888/LARAVEL/fake_twitter_backend/api/register', this.registration);
-              this.saveToSessionStorage(response.data);
-              this.$router.push('/');
-          } catch (error) {
-              console.error(error);
-          }
-        },
-        saveToSessionStorage(data) {
-            sessionStorage.setItem('user', JSON.stringify(data.user));
-            sessionStorage.setItem('authorisation', JSON.stringify(data.authorisation));
+      async submitForm() {
+        try {
+          const loginData = await apiPost('/login', this.login);
+          saveToSessionStorage(loginData);
+          this.$router.push('/');
+        } catch (error) {
+          console.error(error);
         }
+      },
+      async submitRegistrationForm() {
+        try {
+          const registrationData = await apiPost('/register', this.registration);
+          saveToSessionStorage(registrationData);
+          this.$router.push('/');
+        } catch (error) {
+          console.error(error);
+        }
+      }
     }
 }
 </script>
