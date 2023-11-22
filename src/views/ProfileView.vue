@@ -21,7 +21,9 @@
         <h3>Following</h3>
         <ul class="list-group">
           <li v-for="(following, index) in userInfo.following" :key="following._id" class="list-group-item">
-            {{ index + 1 }}. {{ following.followed.name }} ({{ formatDate(following.created_at) }})
+            {{ index + 1 }}. {{ following.followed.name }} -Follow since: {{ formatDate(following.created_at) }}
+            <div class="clearfix">&nbsp;</div>
+            <button class="btn btn-outline-danger btn-sm" @click="unfollow(following.followed._id)">Unfollow</button>
           </li>
         </ul>
       </div>
@@ -33,12 +35,10 @@
 import { apiGet, apiPost, apiLogout } from '../api';
 
 export default {
-  
   data() {
     let userData = sessionStorage.getItem('user');
     let user;
     if (userData !== null) {
-        // Parse userData if it's not null
         try {
             user = JSON.parse(userData);
         } catch (error) {
@@ -46,7 +46,6 @@ export default {
             user = {};
         }
     } else {
-        // Set user to an empty object if userData is null
         user = {};
     }
 
@@ -71,8 +70,19 @@ export default {
         console.error(error);
       }
     },
+    async unfollow(userId) {
+      try {
+        // Call API to unfollow the user
+        await apiPost(`/follow/${userId}/0`, { user_id: this.user_id });
+
+        // Update userInfo to remove the unfollowed user from the following list
+        this.userInfo.following = this.userInfo.following.filter(following => following.followed._id !== userId);
+      } catch (error) {
+        console.error("Error unfollowing user:", error);
+      }
+    },
     formatDate(dateString) {
-      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+      const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
       return new Date(dateString).toLocaleString('en-US', options);
     }
   }
