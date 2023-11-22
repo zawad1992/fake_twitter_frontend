@@ -20,7 +20,8 @@
               <h5 class="card-title">Sidebar</h5>
               <!-- Add sidebar content -->
               <ul class="list-group">
-                <li class="list-group-item"><a class="btn btn-dark btn-sm w-100" href="#">Profile</a></li>
+                <li class="list-group-item"> <router-link to="/" class="btn btn-dark btn-sm w-100">Home</router-link> </li>
+                <li class="list-group-item"> <router-link to="/profile" class="btn btn-dark btn-sm w-100">Profile</router-link> </li>
               </ul>
             </div>
           </div>
@@ -33,11 +34,12 @@
             <div class="card-body">
               <h5 class="card-title">Trending</h5>
               <ul class="list-group">
-                <li class="list-group-item">Hashtag 1</li>
-                <li class="list-group-item">Hashtag 2</li>
-                <li class="list-group-item">Hashtag 3</li>
-                <li class="list-group-item">Hashtag 4</li>
-                <li class="list-group-item">Hashtag 5</li>
+                <li v-for="(tweet, index) in trendingTweets" :key="index" class="list-group-item">
+                  {{ tweet.user ? tweet.user.name : 'Unknown User' }}: {{ tweetSnippet(tweet.tweet) }}
+                  <button class="btn btn-outline-primary btn-sm" @click="follow(tweet.user._id)">Follow</button>
+                  <div class="clearfix"></div>
+                  <small>Posted on : {{ formatDate(tweet.created_at) }} </small>
+                </li>
               </ul>
             </div>
           </div>
@@ -67,11 +69,45 @@
       }
       return {
         user_id: user._id || '',
+        trendingTweets: [],
       };
     },
     async created() {
+      this.fetchTrendingTweets(); 
     },
     methods: {
+      async fetchTrendingTweets() {
+        // Fetch trending tweets from API
+        try {
+          const tradingTweetsResponse = await apiGet(`/tweets/tranding/${this.user_id}`);
+          if (tradingTweetsResponse && tradingTweetsResponse.data) {
+            this.trendingTweets = tradingTweetsResponse.data || []; // Accessing nested 'data'
+          }
+        } catch (error) {
+          console.error("Error fetching trending tweets:", error);
+        }
+        
+      },
+      tweetSnippet(tweet) {
+        if (typeof tweet === 'string') {
+          return tweet.split(' ').slice(0, 10).join(' ') + '...';
+        } else {
+          return 'Tweet content not available';
+        }
+      },
+      formatDate(dateString) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        return new Date(dateString).toLocaleString('en-US', options);
+      },
+      async follow(followUserId) {
+        try {
+          await apiPost(`/follow/${followUserId}/1`,{user_id:this.user_id});
+          this.trendingTweets = this.trendingTweets.filter(tweet => tweet.user._id !== followUserId);
+
+        } catch (error) {
+          console.error("Error following user:", error);
+        }
+      },
       async logout() {
         try {
           await apiLogout();
