@@ -25,7 +25,7 @@
             <p class="card-text">{{ tweet.tweet }}</p>
             <small>Posted at: {{ formatDate(tweet.created_at) }}</small>
             <div class="clearfix"></div>
-            <span>Total: {{ tweet.likes.length }} likes </span>
+            <span>Total: {{ tweet.likes?.length || 0 }} likes </span>
           </div>
         </div>
         <!-- Pagination for 'For You' Tab -->
@@ -55,7 +55,7 @@
             <p class="card-text">{{ tweet.tweet }}</p>
             <small>Posted at: {{ formatDate(tweet.created_at) }}</small>
             <div class="clearfix"></div>
-            <span>Total: {{ tweet.likes.length }} likes </span>
+            <span>Total: {{ tweet.likes?.length || 0 }} likes </span>
             <!-- Check if the current user has liked this tweet -->
             <button v-if="!isLikedByCurrentUser(tweet.likes)" class="btn btn-sm btn-success" @click="likeTweet(tweet._id, 1)">Like</button>
             <button v-else class="btn btn-sm btn-danger" @click="likeTweet(tweet._id, 0)">Unlike</button>

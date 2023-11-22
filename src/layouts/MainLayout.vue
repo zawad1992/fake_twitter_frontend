@@ -46,7 +46,7 @@
                   <div class="clearfix"></div>
                   <small>Posted on : {{ formatDate(tweet.created_at) }} </small>
                   <div class="clearfix"></div>
-                  <span>Total: {{ tweet.likes.length }} likes </span>
+                  <span>Total: {{ tweet.likes?.length || 0 }} likes </span>
                   <!-- Like/Unlike Button -->
                   <button v-if="!hasLikedTweet(tweet)" class="btn btn-sm btn-success" @click="likeTweet(tweet._id, 1)"> Like </button>
                   <button v-else class="btn btn-sm btn-danger" @click="likeTweet(tweet._id, 0)"> Unlike </button>
