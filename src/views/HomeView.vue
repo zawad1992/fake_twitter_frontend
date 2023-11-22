@@ -106,7 +106,8 @@
   </div>
 </template>
 <script>
-import axios from 'axios';
+// Import the API functions
+import { apiGet, apiPost, apiLogout } from '../api';
 
 export default {
   data() {
@@ -142,80 +143,33 @@ export default {
   methods: {
     async fetchTweets() {
       try {
-        const auth = JSON.parse(sessionStorage.getItem('authorisation'));
-        const token = auth ? auth.token : '';
+        const tweetsData = await apiGet('/tweets');
+        this.tweets = tweetsData && tweetsData.data ? tweetsData.data : [];
 
-        const response = await axios.get('http://127.0.0.1:8888/LARAVEL/fake_twitter_backend/api/tweets', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (response.data && response.data.data) {
-          this.tweets = response.data.data;
-        } else {
-          this.tweets = [];
-        }
-        
-        const response2 = await axios.get('http://127.0.0.1:8888/LARAVEL/fake_twitter_backend/api/tweets/user/'+this.user_id, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (response2.data && response2.data.data) {
-          this.mytweets = response2.data.data;
-        } else {
-          this.mytweets = [];
-        }
-
-
+        const myTweetsData = await apiGet(`/tweets/user/${this.user_id}`);
+        this.mytweets = myTweetsData && myTweetsData.data ? myTweetsData.data : [];
       } catch (error) {
         console.error(error);
       }
     },
     async addTweet() {
       try {
-        const auth = JSON.parse(sessionStorage.getItem('authorisation'));
-        const token = auth ? auth.token : '';
-
-        const response = await axios.post('http://127.0.0.1:8888/LARAVEL/fake_twitter_backend/api/tweets', this.newTweet, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-       
-        if (response.data && response.data.data) {
-          this.tweets.unshift(response.data.data);
-          this.mytweets.unshift(response.data.data);
+        const newTweetData = await apiPost('/tweets', this.newTweet);
+        if (newTweetData && newTweetData.data) {
+          this.tweets.unshift(newTweetData.data);
+          this.mytweets.unshift(newTweetData.data);
         }
-        this.newTweet = { user_id: this.newTweet.user_id, tweet: '' }; // Reset the tweet text but keep the user_id
+        this.newTweet = { user_id: this.newTweet.user_id, tweet: '' };
       } catch (error) {
         console.error(error);
       }
     },
     async logout() {
       try {
-        const auth = JSON.parse(sessionStorage.getItem('authorisation'));
-        const token = auth ? auth.token : '';
-
-        // Call backend logout API
-        await axios.post('http://127.0.0.1:8888/LARAVEL/fake_twitter_backend/api/logout', {}, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        // Clear user information from sessionStorage
-        sessionStorage.removeItem('user');
-        sessionStorage.removeItem('authorisation');
-
-        // Redirect to home page or login page
-        this.$router.push('/login'); // Replace '/login' with the path you use for your login page
-
+        await apiLogout();
+        this.$router.push('/login');
       } catch (error) {
         console.error("Logout failed:", error);
-        // Handle error (optional)
       }
     }
   }
