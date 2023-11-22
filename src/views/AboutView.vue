@@ -4,5 +4,5 @@
   </div>
 </template>
 <script>
-console.log("Hello from AboutView.vue");
+
 </script>
