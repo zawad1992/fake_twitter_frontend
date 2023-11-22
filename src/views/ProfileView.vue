@@ -64,7 +64,6 @@ export default {
         const userResponse = await apiGet(`/users/${this.user_id}`);
         if (userResponse && userResponse.data) {
           this.userInfo = userResponse.data || []; // Accessing nested 'data'
-          console.log(this.userInfo);
         }
       } catch (error) {
         console.error(error);
