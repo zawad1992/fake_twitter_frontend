@@ -81,7 +81,7 @@ export default {
           registration: {
             name: '',
             email: '',
-            password: '123456',
+            password: '',
             errors: {}
           }
          
