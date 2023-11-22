@@ -45,6 +45,11 @@
                   <button v-if="!followedUserIds.includes(tweet.user_id)" class="btn btn-outline-primary btn-sm" @click="follow(tweet.user_id)"> Follow </button>
                   <div class="clearfix"></div>
                   <small>Posted on : {{ formatDate(tweet.created_at) }} </small>
+                  <div class="clearfix"></div>
+                  <span>Total: {{ tweet.likes.length }} likes </span>
+                  <!-- Like/Unlike Button -->
+                  <button v-if="!hasLikedTweet(tweet)" class="btn btn-sm btn-success" @click="likeTweet(tweet._id, 1)"> Like </button>
+                  <button v-else class="btn btn-sm btn-danger" @click="likeTweet(tweet._id, 0)"> Unlike </button>
                 </li>
               </ul>
             </div>
@@ -124,6 +129,30 @@
 
         } catch (error) {
           console.error("Error following user:", error);
+        }
+      },
+      hasLikedTweet(tweet) {
+        return tweet.likes.some(like => like.user_id === this.user_id);
+      },
+
+      async likeTweet(tweetId, status) {
+        try {
+          // Make the API call to like or unlike the tweet
+          await apiPost(`/like/${tweetId}/${status}`, { user_id: this.user_id });
+
+          // Find the tweet in trendingTweets and update its likes
+          const tweetIndex = this.trendingTweets.findIndex(tweet => tweet._id === tweetId);
+          if (tweetIndex !== -1) {
+            if (status === 1) {
+              // Add like
+              this.trendingTweets[tweetIndex].likes.push({ user_id: this.user_id });
+            } else {
+              // Remove like
+              this.trendingTweets[tweetIndex].likes = this.trendingTweets[tweetIndex].likes.filter(like => like.user_id !== this.user_id);
+            }
+          }
+        } catch (error) {
+          console.error("Error toggling like:", error);
         }
       },
       async logout() {
