@@ -33,10 +33,16 @@
           <div class="card">
             <div class="card-body">
               <h5 class="card-title">Trending</h5>
+              <!-- Search Bar -->
+              <div class="input-group mb-3">
+                <input type="text" class="form-control" placeholder="Search tweets by email or name" v-model="searchQuery">
+                <button class="btn btn-outline-secondary" type="button" @click="searchTweets">Search</button>
+              </div>
               <ul class="list-group">
                 <li v-for="(tweet, index) in trendingTweets" :key="index" class="list-group-item">
                   {{ tweet.user ? tweet.user.name : 'Unknown User' }}: {{ tweetSnippet(tweet.tweet) }}
-                  <button class="btn btn-outline-primary btn-sm" @click="follow(tweet.user._id)">Follow</button>
+                  <!-- Render follow button only if user is not already followed -->
+                  <button v-if="!followedUserIds.includes(tweet.user_id)" class="btn btn-outline-primary btn-sm" @click="follow(tweet.user_id)"> Follow </button>
                   <div class="clearfix"></div>
                   <small>Posted on : {{ formatDate(tweet.created_at) }} </small>
                 </li>
@@ -70,24 +76,36 @@
       return {
         user_id: user._id || '',
         trendingTweets: [],
+        followedUserIds: [], // Array to store IDs of followed users
+        searchQuery: '', // Added for search functionality
       };
     },
     async created() {
       this.fetchTrendingTweets(); 
     },
     methods: {
-      async fetchTrendingTweets() {
+      async fetchTrendingTweets(search = '') {
         // Fetch trending tweets from API
         try {
-          const tradingTweetsResponse = await apiGet(`/tweets/tranding/${this.user_id}`);
-          if (tradingTweetsResponse && tradingTweetsResponse.data) {
-            this.trendingTweets = tradingTweetsResponse.data || []; // Accessing nested 'data'
+          const endpoint = search ? `/tweets/tranding/${this.user_id}?search=${search}` : `/tweets/tranding/${this.user_id}`;
+          const trendingTweetsResponse = await apiGet(endpoint);
+          if (trendingTweetsResponse && trendingTweetsResponse.data) {
+            this.trendingTweets = trendingTweetsResponse.data || [];
           }
+          
+          if (trendingTweetsResponse && trendingTweetsResponse.followedUserIds) {
+            this.followedUserIds = trendingTweetsResponse.followedUserIds || [];
+          }
+
         } catch (error) {
           console.error("Error fetching trending tweets:", error);
         }
-        
       },
+      searchTweets() {
+        // Call fetchTrendingTweets with the search query
+        this.fetchTrendingTweets(this.searchQuery);
+      },
+
       tweetSnippet(tweet) {
         if (typeof tweet === 'string') {
           return tweet.split(' ').slice(0, 10).join(' ') + '...';
