@@ -18,6 +18,7 @@
                           <label for="email" class="form-label">Email</label>
                           <input type="text" class="form-control" v-model="login.email" id="login.email">
                           <div v-if="login.errors.email" class="text-danger">{{ login.errors.email[0] }}</div>
+                          <div v-if="login.authError" class="text-danger">{{ login.authError }}</div>
                         </div>
                         <div class="mb-3">
                           <label for="password" class="form-label">Password</label>
@@ -76,7 +77,8 @@ export default {
           login: {
             email: '',
             password: '',
-            errors: {}
+            errors: {},
+            authError: ''
           },
           registration: {
             name: '',
@@ -91,6 +93,10 @@ export default {
       async submitForm() {
         try {
           const loginData = await apiPost('/login', this.login, false);
+
+          // Clear previous authentication errors
+          this.login.authError = '';
+
           if (loginData.status === 'failed' && loginData.data) {
             this.login.errors = loginData.data;
           } else {
@@ -98,7 +104,11 @@ export default {
             this.$router.push('/');
           }
         } catch (error) {
-          console.error(error);
+          if (error.isUnauthenticated) {
+            this.login.authError = 'Username or password is incorrect';
+          } else {
+            console.error(error);
+          }
         }
       },
       async submitRegistrationForm() {
